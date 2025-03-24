@@ -1,0 +1,7 @@
+controller:
+  nginxplus: false
+  image:
+    repository: "k8s.gcr.io/ingress-nginx/controller"
+    tag: "latest"
+  service:
+    loadBalancerIP: "35.224.211.204"

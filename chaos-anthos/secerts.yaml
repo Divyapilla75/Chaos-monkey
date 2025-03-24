@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: anthos-secrets
+  namespace: anthos # Replace with the correct namespace
+type: Opaque
+data:
+  SPRING_DATASOURCE_USERNAME: cG9zdGdyZXM=  # Base64 encoded value of "postgres"
+  SPRING_DATASOURCE_PASSWORD: cm9vdA==      # Base64 encoded value of "root"
+    #  SPRING_DATASOURCE_URL: amRiYzpwb3N0Z3Jlc3Fsb2NhbC8yMTIuMTY4LjE2OC4xOjU0MzI=  # Base64 encoded URL "jdbc:postgresql://postgres:5432/apigee_x_db"

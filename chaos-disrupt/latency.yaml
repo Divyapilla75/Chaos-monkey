@@ -1,0 +1,17 @@
+# cat network-latency.yaml 
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: network-latency
+  namespace: ps
+spec:
+  action: delay
+  mode: all
+  selector:
+    labelSelectors:
+      app: my-app
+  delay:
+    latency: "2000ms"  # 2 seconds of latency * 4 times in real-time
+    correlation: "100"  # Apply delay with 100% correlation to ensure all requests are affected
+    jitter: "0ms"
+  duration: "999999s"

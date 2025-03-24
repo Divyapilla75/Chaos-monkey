@@ -1,0 +1,35 @@
+title: "Network Disruption Experiment"
+description: "Simulate network disruption between application and database pods"
+steady-state-hypothesis:
+  title: "Application can communicate with database"
+  probes:
+    - name: "application-healthy"
+      type: probe
+      provider:
+        type: python
+        module: chaosk8s.probes
+        func: microservice_available_and_healthy
+        arguments:
+          name: "my-app"
+    - name: "database-healthy"
+      type: probe
+      provider:
+        type: python
+        module: chaosk8s.probes
+        func: microservice_available_and_healthy
+        arguments:
+          name: "my-db"
+method:
+  - name: "network-disruption"
+    type: action
+    provider:
+      type: chaos-mesh
+      action: network-chaos
+      arguments:
+        mode: "loss"
+        target:
+          namespace: "ps"
+          labels:
+            app: "my-app"
+        duration: "10s"
+

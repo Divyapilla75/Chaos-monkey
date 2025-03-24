@@ -1,0 +1,16 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: network-latency
+  namespace: ps
+spec:
+  action: delay
+  mode: all
+  selector:
+    labelSelectors:
+      app: my-app
+  delay:
+    latency: "3000ms"  # 3 seconds of latency
+    jitter: "500ms"    # 500 ms of random jitter
+      #duration: "60s"       # Induce delay for 60 seconds
+

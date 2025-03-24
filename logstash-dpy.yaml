@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logstash
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:7.15.2
+        ports:
+        - containerPort: 5044
+        volumeMounts:
+          - name: config-volume
+            mountPath: /usr/share/logstash/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: logstash-configmap
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: logstash-service
+  namespace: elk-stack
+spec:
+  type: NodePort
+  selector:
+    app: logstash
+  ports:
+  - protocol: TCP
+    port: 5044
+    targetPort: 5044
+    nodePort: 30003     

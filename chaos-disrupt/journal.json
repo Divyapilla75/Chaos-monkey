@@ -1,0 +1,223 @@
+{
+  "chaoslib-version": "1.44.0",
+  "platform": "Linux-6.1.0-28-cloud-amd64-x86_64-with-glibc2.36",
+  "node": "chas-vm-connect-gke",
+  "experiment": {
+    "title": "Network Disruption Experiment",
+    "description": "Simulate network disruption between my-app pod and postgres pod",
+    "steady-state-hypothesis": {
+      "title": "All our microservices should be healthy",
+      "probes": [
+        {
+          "name": "application-healthy",
+          "type": "probe",
+          "provider": {
+            "type": "http",
+            "timeout": 10,
+            "url": "http://35.240.239.126.nip.io/postgres/alert/actuator/health",
+            "expected_status": [
+              200,
+              404
+            ]
+          },
+          "tolerance": [
+            200,
+            404
+          ]
+        }
+      ]
+    },
+    "method": [
+      {
+        "name": "log-initial-state",
+        "type": "action",
+        "provider": {
+          "type": "process",
+          "path": "kubectl",
+          "arguments": [
+            "logs",
+            "my-app-9687658cf-j5rcz",
+            "-n",
+            "ps"
+          ]
+        }
+      },
+      {
+        "name": "block-traffic",
+        "type": "action",
+        "provider": {
+          "type": "process",
+          "path": "/bin/sh",
+          "arguments": [
+            "-c",
+            "iptables -A OUTPUT -p tcp --dport 5432 -j DROP\niptables -A INPUT -p tcp --sport 5432 -j DROP\n"
+          ]
+        },
+        "pauses": {
+          "after": 0
+        }
+      },
+      {
+        "name": "pause",
+        "type": "action",
+        "provider": {
+          "type": "process",
+          "path": "/bin/sleep",
+          "arguments": [
+            "60"
+          ]
+        }
+      },
+      {
+        "name": "unblock-traffic",
+        "type": "action",
+        "provider": {
+          "type": "process",
+          "path": "/bin/sh",
+          "arguments": [
+            "-c",
+            "iptables -D OUTPUT -p tcp --dport 5432 -j DROP\niptables -D INPUT -p tcp --sport 5432 -j DROP\n"
+          ]
+        },
+        "pauses": {
+          "after": 0
+        }
+      },
+      {
+        "name": "log-final-state",
+        "type": "action",
+        "provider": {
+          "type": "process",
+          "path": "kubectl",
+          "arguments": [
+            "logs",
+            "my-app-9687658cf-j5rcz",
+            "-n",
+            "ps"
+          ]
+        }
+      }
+    ],
+    "dry": null
+  },
+  "start": "2024-11-29T13:11:35.151926+00:00",
+  "status": "interrupted",
+  "deviated": false,
+  "steady_states": {
+    "before": {
+      "steady_state_met": true,
+      "probes": [
+        {
+          "activity": {
+            "name": "application-healthy",
+            "type": "probe",
+            "provider": {
+              "type": "http",
+              "timeout": 10,
+              "url": "http://35.240.239.126.nip.io/postgres/alert/actuator/health",
+              "expected_status": [
+                200,
+                404
+              ]
+            },
+            "tolerance": [
+              200,
+              404
+            ]
+          },
+          "output": {
+            "status": 200,
+            "headers": {
+              "Server": "nginx/1.27.2",
+              "Date": "Fri, 29 Nov 2024 13:11:35 GMT",
+              "Content-Type": "application/vnd.spring-boot.actuator.v3+json",
+              "Transfer-Encoding": "chunked",
+              "Connection": "keep-alive"
+            },
+            "body": "{\"status\":\"UP\",\"components\":{\"db\":{\"status\":\"UP\",\"details\":{\"database\":\"PostgreSQL\",\"validationQuery\":\"isValid()\"}},\"diskSpace\":{\"status\":\"UP\",\"details\":{\"total\":101203873792,\"free\":93270261760,\"threshold\":10485760,\"path\":\"/.\",\"exists\":true}},\"livenessState\":{\"status\":\"UP\"},\"ping\":{\"status\":\"UP\"},\"readinessState\":{\"status\":\"UP\"}},\"groups\":[\"liveness\",\"readiness\"]}"
+          },
+          "start": "2024-11-29T13:11:35.152595+00:00",
+          "status": "succeeded",
+          "end": "2024-11-29T13:11:35.582231+00:00",
+          "duration": 0.429636,
+          "tolerance_met": true
+        }
+      ]
+    },
+    "after": null,
+    "during": []
+  },
+  "run": [
+    {
+      "activity": {
+        "name": "log-initial-state",
+        "type": "action",
+        "provider": {
+          "type": "process",
+          "path": "kubectl",
+          "arguments": [
+            "logs",
+            "my-app-9687658cf-j5rcz",
+            "-n",
+            "ps"
+          ]
+        }
+      },
+      "output": {
+        "status": 0,
+        "stdout": "\n  .   ____          _            __ _ _\n /\\\\ / ___'_ __ _ _(_)_ __  __ _ \\ \\ \\ \\\n( ( )\\___ | '_ | '_| | '_ \\/ _` | \\ \\ \\ \\\n \\\\/  ___)| |_)| | | | | || (_| |  ) ) ) )\n  '  |____| .__|_| |_|_| |_\\__, | / / / /\n =========|_|==============|___/=/_/_/_/\n :: Spring Boot ::                (v3.1.0)\n\n2024-11-29T11:41:52.647Z  INFO 1 --- [           main] c.e.p.s.SpringPostgresDockerApplication  : Starting SpringPostgresDockerApplication v0.0.1-SNAPSHOT using Java 17.0.2 with PID 1 (/app.jar started by root in /)\n2024-11-29T11:41:52.653Z  INFO 1 --- [           main] c.e.p.s.SpringPostgresDockerApplication  : No active profile set, falling back to 1 default profile: \"default\"\n2024-11-29T11:41:54.678Z  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.\n2024-11-29T11:41:54.788Z  INFO 1 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 99 ms. Found 1 JPA repository interfaces.\n2024-11-29T11:41:55.867Z  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)\n2024-11-29T11:41:55.887Z  INFO 1 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]\n2024-11-29T11:41:55.888Z  INFO 1 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.8]\n2024-11-29T11:41:56.153Z  INFO 1 --- [           main] o.a.c.c.C.[.[.[/postgres/alert]          : Initializing Spring embedded WebApplicationContext\n2024-11-29T11:41:56.157Z  INFO 1 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3313 ms\n2024-11-29T11:41:56.640Z  INFO 1 --- [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]\n2024-11-29T11:41:56.705Z  INFO 1 --- [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.2.2.Final\n2024-11-29T11:41:56.712Z  INFO 1 --- [           main] org.hibernate.cfg.Environment            : HHH000406: Using bytecode reflection optimizer\n2024-11-29T11:41:56.935Z  INFO 1 --- [           main] o.h.b.i.BytecodeProviderInitiator        : HHH000021: Bytecode provider name : bytebuddy\n2024-11-29T11:41:57.147Z  INFO 1 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer\n2024-11-29T11:41:57.175Z  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...\n2024-11-29T11:41:57.573Z  INFO 1 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@6ef81f31\n2024-11-29T11:41:57.575Z  INFO 1 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.\n2024-11-29T11:41:57.662Z  INFO 1 --- [           main] org.hibernate.orm.dialect                : HHH035001: Using dialect: org.hibernate.dialect.PostgreSQLDialect, version: org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$DialectResolutionInfoImpl@2cfbeac4\n2024-11-29T11:41:58.071Z  INFO 1 --- [           main] o.h.b.i.BytecodeProviderInitiator        : HHH000021: Bytecode provider name : bytebuddy\n2024-11-29T11:41:59.088Z  INFO 1 --- [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]\nHibernate: drop table if exists employee cascade\nHibernate: drop sequence if exists employee_seq\nHibernate: create sequence employee_seq start with 1 increment by 50\nHibernate: create table employee (id integer not null, name varchar(255), primary key (id))\n2024-11-29T11:41:59.163Z  INFO 1 --- [           main] o.h.t.s.i.e.GenerationTargetToDatabase   : HHH000476: Executing script '[injected ScriptSourceInputNonExistentImpl script]'\n2024-11-29T11:41:59.165Z  INFO 1 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'\n2024-11-29T11:41:59.655Z  WARN 1 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning\n2024-11-29T11:42:00.549Z  INFO 1 --- [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 2 endpoint(s) beneath base path '/actuator'\n2024-11-29T11:42:00.704Z  INFO 1 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path '/postgres/alert'\n2024-11-29T11:42:00.752Z  INFO 1 --- [           main] c.e.p.s.SpringPostgresDockerApplication  : Started SpringPostgresDockerApplication in 9.031 seconds (process running for 10.237)\n2024-11-29T11:55:36.928Z  INFO 1 --- [nio-8080-exec-5] o.a.c.c.C.[.[.[/postgres/alert]          : Initializing Spring DispatcherServlet 'dispatcherServlet'\n2024-11-29T11:55:36.928Z  INFO 1 --- [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'\n2024-11-29T11:55:36.930Z  INFO 1 --- [nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\nHibernate: select e1_0.id,e1_0.name from employee e1_0\n",
+        "stderr": "Defaulted container \"my-app\" out of: my-app, install-tc (init)\n"
+      },
+      "start": "2024-11-29T13:11:35.582850+00:00",
+      "status": "succeeded",
+      "end": "2024-11-29T13:11:36.759222+00:00",
+      "duration": 1.176372
+    },
+    {
+      "activity": {
+        "name": "block-traffic",
+        "type": "action",
+        "provider": {
+          "type": "process",
+          "path": "/bin/sh",
+          "arguments": [
+            "-c",
+            "iptables -A OUTPUT -p tcp --dport 5432 -j DROP\niptables -A INPUT -p tcp --sport 5432 -j DROP\n"
+          ]
+        },
+        "pauses": {
+          "after": 0
+        }
+      },
+      "output": {
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "start": "2024-11-29T13:11:36.759516+00:00",
+      "status": "succeeded",
+      "end": "2024-11-29T13:11:36.764819+00:00",
+      "duration": 0.005303
+    },
+    {
+      "activity": {
+        "name": "pause",
+        "type": "action",
+        "provider": {
+          "type": "process",
+          "path": "/bin/sleep",
+          "arguments": [
+            "60"
+          ]
+        }
+      },
+      "output": null,
+      "start": "2024-11-29T13:11:36.765101+00:00",
+      "end": "2024-11-29T13:11:45.229771+00:00",
+      "duration": 8.46467
+    }
+  ],
+  "rollbacks": [],
+  "end": "2024-11-29T13:11:45.230278+00:00",
+  "duration": 10.0800302028656
+}

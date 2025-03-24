@@ -1,0 +1,31 @@
+version: 1.0.0
+title: What happens if latency is induced in the application?
+description: >
+  This experiment introduces latency in the application while keeping the pod alive to test its resilience and performance under delayed response conditions.
+tags:
+  - k8s
+  - latency
+steady-state-hypothesis:
+  title: Application responds to requests
+  probes:
+    - name: app-responds-with-latency
+      type: probe
+      tolerance: 5000  # Allowable delay tolerance in ms
+      provider:
+        type: http
+        timeout: 15
+        url: http://35.240.239.126.nip.io/api/employees
+method:
+  - type: action
+    name: induce-latency
+    provider:
+      type: chaos-mesh
+      action: delay
+      selector:
+        labelSelectors:
+          app: my-app
+      delay:
+        latency: "3000ms"  # Fixed 3 seconds of delay
+        jitter: "500ms"     # Random jitter in delay
+      duration: "300s"     # Run the experiment for 5 minutes
+

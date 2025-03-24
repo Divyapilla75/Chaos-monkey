@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-configmap
+  namespace: elk-stack
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    path.config: /usr/share/logstash/pipeline
+  logstash.conf: |
+    input {
+      tcp {
+        mode => "server"
+        port => 9600
+        codec => json_lines
+      }
+    }
+
+    output {
+      stdout {
+        codec => rubydebug
+      }
+
+      elasticsearch {
+        index => "%{[spring.application.name]}-%{+YYYY.MM.dd}"
+        hosts => "elasticsearch:9200"
+      }

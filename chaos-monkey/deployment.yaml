@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymentsettlement
+  namespace: nginxwebapp
+  labels:
+    app: paymentsettlement
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paymentsettlement
+  template:
+    metadata:
+      labels:
+        app: paymentsettlement
+    spec:
+      containers:
+      - name: chaostoolkit
+        image: knoah98/chaostoolkit:1.0.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"

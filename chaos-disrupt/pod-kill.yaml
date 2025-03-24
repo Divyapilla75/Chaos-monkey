@@ -1,0 +1,14 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: pod-restart
+spec:
+  action: pod-kill
+  mode: one
+  selector:
+    namespaces:
+      - ps
+    labelSelectors:
+      app: postgres
+  duration: "30s"  # The pod will be restarted and kept down for 30 seconds
+

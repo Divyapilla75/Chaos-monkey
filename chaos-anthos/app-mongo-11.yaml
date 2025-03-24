@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-app
+  template:
+    metadata:
+      labels:
+        app: mongo-app
+    spec:
+      containers:
+      - name: mongo-app
+        image: knoah98/config:1.3.48  # Replace with your image
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        env:
+          - name: SPRING_DATA_MONGODB_URI
+            value: mongodb://root:pwwrd@mongod:27017/test_db?directConnection=true&authSource=admin
+        envFrom:
+          - secretRef:
+              name: mongo-secrets
+          - configMapRef:
+              name: mongo-config      
+        ports:
+        - containerPort: 8001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-app-service
+spec:
+  selector:
+    app: mongo-app
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001
+  type: LoadBalancer      

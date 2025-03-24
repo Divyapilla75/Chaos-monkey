@@ -1,0 +1,55 @@
+title: "Network Disruption Experiment"
+description: "Simulate network disruption between my-app pod and postgres pod"
+steady-state-hypothesis:
+  title: "All our microservices should be healthy"
+  probes:
+    - name: "application-healthy"
+      type: probe
+      provider:
+        type: http
+        timeout: 10
+        url: "http://10.16.8.67:8080/"
+        expected_status: [200, 404]
+      tolerance:
+        - 200
+        - 404
+    - name: "database-connection"
+      type: probe
+      provider:
+        type: process
+        path: kubectl
+        arguments: ["exec", "-n", "ps", "postgres-6948685f89-2fk2k", "--", "psql", "-U", "postgres", "-c", "SELECT 1"]
+      tolerance: 1
+method:
+  - name: "log-initial-state"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["logs", "my-app-9687658cf-j5rcz", "-n", "ps"]
+  - name: "block-traffic"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["exec", "-n", "ps", "my-app-9687658cf-j5rcz", "--", "iptables", "-A", "OUTPUT", "-p", "tcp", "--dport", "5432", "-j", "DROP"]
+  - name: "pause"
+    type: action
+    provider:
+      type: process
+      path: /bin/sleep
+      arguments:
+        - "20"
+  - name: "unblock-traffic"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["exec", "-n", "ps", "my-app-9687658cf-j5rcz", "--", "iptables", "-D", "OUTPUT", "-p", "tcp", "--dport", "5432", "-j", "DROP"]
+  - name: "log-final-state"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["logs", "my-app-9687658cf-j5rcz", "-n", "ps"]
+

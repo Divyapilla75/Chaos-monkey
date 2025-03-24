@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: anthos
+  labels:
+    app: postgres
+data:
+  POSTGRES_DB: apigee_x_db
+  POSTGRES_PASSWORD: root
+  POSTGRES_USER: postgres  

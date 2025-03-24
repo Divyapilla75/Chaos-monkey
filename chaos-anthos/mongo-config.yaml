@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-config
+  namespace: anthos
+  labels:
+    app: mongo
+data:
+  MONGO_INITDB_ROOT_USERNAME: root
+  MONGO_INITDB_ROOT_PASSWORD: pwwrd  
+  spring.data.mongodb.uri: mongodb://root:pwwrd@mongodb:27017/test_db?directConnection=true&authSource=admin  

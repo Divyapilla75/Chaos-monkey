@@ -1,0 +1,110 @@
+  - name: "unblock-traffic"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["exec", "-n", "my-app-7bf96959c7-9tjvb", "my-app-7bf96959c7-9tjvb", "--", "iptables", "-D", "OUTPUT", "-p", "tcp", "--dport", "5432", "-j", "DROP"]
+  - name: "log-final-state"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["logs", "my-app-7bf96959c7-9tjvb", "-n", "ps"]
+
+root@test-image-20241128-153343:~/chaos-disrupt# ls
+basic-http-check.yml  experiment.yaml   journal.json  my-app-service.yaml  mysql-db.yaml       new.yaml    po-ip.yaml     ultimate2.yaml
+chaostoolkit.log      experiment5.yaml  latest.yaml   my-app.yaml          mysql-service.yaml  nginx.conf  ultimate.yaml
+root@test-image-20241128-153343:~/chaos-disrupt# cat new.yaml 
+title: "Network Disruption Experiment"
+description: "Simulate network disruption between application and database pods"
+steady-state-hypothesis:
+  title: "All our microservices should be healthy"
+  probes:
+    - name: "application-healthy"
+      type: probe
+      provider:
+        type: http
+        timeout: 10
+        url: "http://10.16.0.10:8080/"
+        expected_status: [200, 404]
+      tolerance: 
+        - 200
+        - 404
+method:
+  - name: "network-disruption"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["exec", "-n", "ps", "my-app-7bf96959c7-9tjvb", "--", "tc", "qdisc", "add", "dev", "eth0", "root", "netem", "loss", "10%"]
+  - name: "pause"
+    type: action
+    provider:
+      type: process
+      path: /bin/sleep
+      arguments:
+        - "30"
+  - name: "revert-network-disruption"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["exec", "-n", "ps", "my-app-7bf96959c7-9tjvb", "--", "tc", "qdisc", "del", "dev", "eth0", "root", "netem"]
+  - name: "log-pod-network" 
+    type: action 
+    provider: 
+      type: process 
+      path: kubectl
+      arguments: ["exec", "-n", "ps", "my-app-7bf96959c7-9tjvb", "--", "tc", "qdisc", "show"]
+root@test-image-20241128-153343:~/chaos-disrupt# cat latest.yaml 
+title: "Network Disruption Experiment"
+description: "Simulate network disruption between my-app pod and postgres pod"
+steady-state-hypothesis:
+  title: "All our microservices should be healthy"
+  probes:
+    - name: "application-healthy"
+      type: probe
+      provider:
+        type: http
+        timeout: 10
+        url: "http://10.16.0.10:8080/"
+        expected_status: [200, 404]
+      tolerance: 
+        - 200
+        - 404
+method:
+  - name: "block-traffic"
+    type: action
+    provider:
+      type: process
+      path: /bin/sh
+      arguments:
+        - -c
+        - |
+          iptables -A OUTPUT -p tcp --dport 5432 -j DROP
+    pauses:
+      after: 0
+  - name: "pause"
+    type: action
+    provider:
+      type: process
+      path: /bin/sleep
+      arguments:
+        - "20"
+  - name: "unblock-traffic"
+    type: action
+    provider:
+      type: process
+      path: /bin/sh
+      arguments:
+        - -c
+        - |
+          iptables -D OUTPUT -p tcp --dport 5432 -j DROP
+    pauses:
+      after: 0
+  - name: "log-pod-network"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["exec", "-n", "ps", "my-app-7bf96959c7-9tjvb", "--", "iptables", "-L"]

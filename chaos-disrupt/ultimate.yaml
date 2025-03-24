@@ -1,0 +1,59 @@
+title: "Network Disruption Experiment"
+description: "Simulate network disruption between my-app pod and postgres pod"
+steady-state-hypothesis:
+  title: "All our microservices should be healthy"
+  probes:
+    - name: "application-healthy"
+      type: probe
+      provider:
+        type: http
+        timeout: 10
+        url: "http://35.240.239.126.nip.io/postgres/alert/actuator/health"
+        expected_status: [200, 404]
+      tolerance: 
+        - 200
+        - 404
+method:
+  - name: "log-initial-state"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["logs", "my-app-9687658cf-j5rcz", "-n", "ps"]
+  - name: "block-traffic"
+    type: action
+    provider:
+      type: process
+      path: /bin/sh
+      arguments:
+        - -c
+        - |
+          iptables -A OUTPUT -p tcp --dport 5432 -j DROP
+          iptables -A INPUT -p tcp --sport 5432 -j DROP
+    pauses:
+      after: 0
+  - name: "pause"
+    type: action
+    provider:
+      type: process
+      path: /bin/sleep
+      arguments:
+        - "60"
+  - name: "unblock-traffic"
+    type: action
+    provider:
+      type: process
+      path: /bin/sh
+      arguments:
+        - -c
+        - |
+          iptables -D OUTPUT -p tcp --dport 5432 -j DROP
+          iptables -D INPUT -p tcp --sport 5432 -j DROP
+    pauses:
+      after: 0
+  - name: "log-final-state"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["logs", "my-app-9687658cf-j5rcz", "-n", "ps"]

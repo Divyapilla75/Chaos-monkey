@@ -1,0 +1,42 @@
+title: "Network Disruption Experiment"
+description: "Simulate network disruption between application and database pods"
+steady-state-hypothesis:
+  title: "All our microservices should be healthy"
+  probes:
+    - name: "application-healthy"
+      type: probe
+      provider:
+        type: http
+        timeout: 10
+        url: "http://my-app-service.demo.svc.cluster.local/"
+        expected_status: [200]
+      tolerance: 200
+    - name: "database-healthy"
+      type: probe
+      provider:
+        type: http
+        timeout: 10
+        url: "http://mysql.demo.svc.cluster.local/health"
+        expected_status: [200]
+      tolerance: 200
+method:
+  - name: "network-disruption"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["exec", "-n", "demo", "my-app-77fbf84c65-2f56f", "--", "tc", "qdisc", "add", "dev", "eth0", "root", "netem", "loss", "10%"]
+  - name: "pause"
+    type: action
+    provider:
+      type: process
+      path: /bin/sleep
+      arguments:
+        - "30"
+  - name: "revert-network-disruption"
+    type: action
+    provider:
+      type: process
+      path: kubectl
+      arguments: ["exec", "-n", "demo", "my-app-77fbf84c65-2f56f", "--", "tc", "qdisc", "del", "dev", "eth0", "root", "netem"]
+

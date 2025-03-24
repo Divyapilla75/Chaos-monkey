@@ -1,0 +1,22 @@
+title: "Basic HTTP Check Experiment"
+description: "Test connectivity to my-app pod directly"
+steady-state-hypothesis:
+  title: "The application pod should be reachable"
+  probes:
+    - name: "application-healthy"
+      type: probe
+      provider:
+        type: http
+        timeout: 10
+        url: "http://10.16.10.8/"
+        expected_status: [200]
+      tolerance: 200
+method:
+  - name: "pause"
+    type: action
+    provider:
+      type: process
+      path: /bin/sleep
+      arguments:
+        - "5"
+
