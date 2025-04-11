@@ -1,0 +1,107 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Workflow
+metadata:
+  name: combined-chaos
+  namespace: bank-of-anthos
+spec:
+  entry: combined-templates
+  templates:
+    - name: combined-templates
+      templateType: Parallel  # Run templates in parallel
+      children:
+        - gradual-app-kill-workflow
+        - resource-starvation-task
+ 
+    - name: gradual-app-kill-workflow
+      templateType: Serial
+      children:
+        - block-25ms-latency
+        - block-50ms-latency
+        - block-75ms-latency
+        - block-100ms-latency
+        - pod-restart-task
+ 
+    - name: block-25ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1200ms"
+          correlation: "25"
+          jitter: "0ms"
+      deadline: "2m"
+ 
+    - name: block-50ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1500ms"
+          correlation: "50"
+          jitter: "0ms"
+      deadline: "2m"
+ 
+    - name: block-75ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "20000ms"
+          correlation: "75"
+          jitter: "0ms"
+      deadline: "2m"
+ 
+    - name: block-100ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "2500ms"
+          correlation: "100"
+          jitter: "0ms"
+      deadline: "2m"
+ 
+    - name: pod-restart-task
+      templateType: PodChaos
+      podChaos:
+        action: pod-kill
+        mode: all
+        selector:
+          namespaces:
+            - bank-of-anthos
+          labelSelectors:
+            app: ledgerwriter
+      deadline: "60s"
+ 
+    - name: resource-starvation-task
+      templateType: StressChaos
+      stressChaos:
+        mode: one
+        selector:
+          namespaces:
+            - bank-of-anthos
+          labelSelectors:
+            app: ledgerwriter
+        stressors:
+          cpu:
+            workers: 4
+          memory:
+            workers: 5
+            size: "150M"
+              # deadline: "30s"

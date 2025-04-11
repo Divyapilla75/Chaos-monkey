@@ -1,0 +1,163 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Workflow
+metadata:
+  name: combined-chaos
+  namespace: boa
+spec:
+  entry: combined-templates
+  templates:
+    - name: combined-templates
+      templateType: Parallel
+      children:
+        - network-latency-all
+        - cpu-stress-all
+
+    - name: network-latency-all
+      templateType: Serial  # Run latency and pod chaos in parallel
+      children:
+        - latency-workflow
+        - workflow-pod-chaos-schedule
+
+    - name: latency-workflow
+      templateType: Serial  # Run latency blocks sequentially
+      children:
+        - block-25ms-latency
+        - block-50ms-latency
+        - block-75ms-latency
+        - block-100ms-latency
+
+    - name: block-25ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+              # pods:
+            # bank-of-anthos:
+              # - ledgerwriter
+        delay:
+          latency: "25ms"
+          correlation: "0"
+          jitter: "0ms"
+      deadline: "1m"
+
+    - name: block-50ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+              # pods:
+            # bank-of-anthos:
+              # - ledgerwriter
+        delay:
+          latency: "50ms"
+          correlation: "0"
+          jitter: "0ms"
+      deadline: "2m"
+
+    - name: block-75ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+              #pods:
+            # bank-of-anthos:
+              # - ledgerwriter
+        delay:
+          latency: "75ms"
+          correlation: "0"
+          jitter: "0ms"
+      deadline: "2m"
+
+    - name: block-100ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+              # pods:
+            # bank-of-anthos:
+              #  - ledgerwriter
+        delay:
+          latency: "100ms"
+          correlation: "0"
+          jitter: "0ms"
+      deadline: "1m"
+
+    - name: workflow-pod-chaos-schedule
+      templateType: Schedule
+      deadline: "420s"
+      schedule:
+        schedule: '@every 30s'
+        concurrencyPolicy: Forbid
+        type: PodChaos
+        podChaos:
+          action: pod-kill
+          mode: all  # Ensures at least one pod is selected
+          selector:
+            namespaces:
+              - boa
+            labelSelectors:
+              app: ledgerwriter
+                # pods:
+                #  bank-of-anthos:
+                # - ledgerwriter
+
+    - name: cpu-stress-all
+      templateType: Parallel  # Run stress tasks in parallel
+      children:
+        - cpu-stress-task
+        - memory-stress-task
+
+    - name: cpu-stress-task
+      templateType: StressChaos
+      stressChaos:
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+              #  pods:
+            #  bank-of-anthos:
+              # - ledgerwriter
+        stressors:
+          cpu:
+            workers: 4
+              # deadline: "30s"
+
+    - name: memory-stress-task
+      templateType: StressChaos
+      stressChaos:
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+              #  pods:
+              #  bank-of-anthos:
+              # - ledgerwriter
+        stressors:
+          memory:
+            workers: 5
+            size: "150M"
+              # deadline: "30s"

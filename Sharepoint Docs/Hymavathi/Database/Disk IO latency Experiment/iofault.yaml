@@ -1,0 +1,15 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: IOChaos
+metadata:
+  name: io-fault-example
+  namespace: boa
+spec:
+  action: fault
+  mode: one
+  selector:
+    labelSelectors:
+      app: ledger-db
+  volumePath: /var/lib/postgresql/data
+  path: /var/lib/postgresql/data/**/*  # Targeting all files under the data directory
+  errno: 5  # Input/Output error (instead of 28)
+  percent: 100  # Injecting fault on all IO operations

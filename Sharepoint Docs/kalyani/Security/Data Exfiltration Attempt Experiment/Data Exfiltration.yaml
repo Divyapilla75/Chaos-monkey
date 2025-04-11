@@ -1,0 +1,19 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: network-partition-during-transfer
+  namespace: ps  # Your relevant namespace
+spec:
+  action: partition
+  mode: full
+  selector:
+    pods:
+      matchLabels:
+        app: ledger-db  # Pod where data is being pulled from
+  target:
+    selector:
+      pods:
+        matchLabels:
+          app: postgres  # Pod where the data is being transferred to
+  direction: To
+  duration: "120s"  # Duration of chaos injection

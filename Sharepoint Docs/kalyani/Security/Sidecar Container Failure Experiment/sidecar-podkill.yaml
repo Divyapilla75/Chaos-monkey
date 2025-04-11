@@ -1,0 +1,21 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: kill-sidecar-schedule
+  namespace: ps  # Ensure it's in the correct namespace
+spec:
+  schedule: "@every 20s"
+  type: PodChaos
+  historyLimit: 1
+  concurrencyPolicy: Forbid
+  podChaos:
+    action: container-kill
+    mode: one
+    selector:
+      namespaces:
+        - ps
+      labelSelectors:
+        app: balance-reader  # Ensure it matches the deployment labels
+    containerNames:
+      - logging-sidecar  # The name of the sidecar container to kill
+        #   duration: "2m"  # Set to 2 minutes

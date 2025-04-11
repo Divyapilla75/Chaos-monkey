@@ -1,0 +1,90 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Workflow
+metadata:
+  name: ddos-simulation
+    #  namespace: bank-of-anthos
+spec:
+  entry: ddos-attack
+  templates:
+    - name: ddos-attack
+      templateType: Parallel
+      children:
+        - network-flood
+        - bandwidth
+        - high-latency
+        - cpu-stress
+        - memory-stress
+
+    - name: network-flood
+      templateType: NetworkChaos
+      networkChaos:
+        action: loss
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+        loss:
+          loss: "80"
+          # duration: "180s"
+
+    - name: bandwidth
+      templateType: NetworkChaos
+      networkChaos:
+        action: bandwidth
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+        bandwidth:
+          rate: "10kbps"
+          limit: 1000
+          buffer: 10000
+
+    - name: high-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "100ms"
+          jitter: "10ms"
+          # duration: "180s"
+
+    - name: cpu-stress
+      templateType: StressChaos
+      stressChaos:
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+        stressors:
+          cpu:
+            workers: 4
+            load: 100
+            # duration: "180s"
+
+    - name: memory-stress
+      templateType: StressChaos
+      stressChaos:
+        mode: all
+        selector:
+          namespaces:
+            - boa
+          labelSelectors:
+            app: ledgerwriter
+        stressors:
+          memory:
+            workers: 4
+            size: "150M"
+            # duration: "180s"

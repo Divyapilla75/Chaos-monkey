@@ -1,0 +1,17 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: bandwidth-limit
+spec:
+  action: bandwidth
+  mode: all
+  selector:
+    namespaces:
+      - boa
+    labelSelectors:
+      app: frontend
+  bandwidth:
+    rate: "10kbps"
+    limit: 1000
+    buffer: 10000
+  duration: "2m"

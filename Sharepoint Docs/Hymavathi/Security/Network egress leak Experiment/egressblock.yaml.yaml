@@ -1,0 +1,24 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: egress-policy-bypass
+spec:
+  action: delay  # Simulating network delay using netem action
+  mode: one  # Apply the chaos to one pod at a time
+  selector:
+    namespaces:
+      - ps  # Specify the namespace where your app is running
+    labelSelectors:
+      app: my-app  # The label of your app pod
+  direction: to  # Egress traffic (outgoing from your pod)
+  target:
+    mode: one  # Apply chaos to one target at a time
+    selector:
+      namespaces:
+        - ps  # Namespace of the target
+      labelSelectors:
+        app: proxy-nginx  # Label of the proxy-nginx pod
+  delay:
+    latency: "100ms"  # Introduce 100ms latency
+    jitter: "50ms"  # Introduce 50ms jitter (random variation)
+    correlation: "0.5"  # 50% correlation between packets' delay

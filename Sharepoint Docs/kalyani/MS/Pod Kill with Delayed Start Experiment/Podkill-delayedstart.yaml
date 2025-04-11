@@ -1,0 +1,82 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Workflow
+metadata:
+  name: pod-kill-and-network-latency
+  namespace: bank-of-anthos  # Ensure this matches your namespace
+spec:
+  entry: sequence
+  templates:
+    - name: sequence
+      templateType: Serial  # Defines sequential execution
+      children:
+        - pod-kill
+        - block-80ms-latency
+        - block-60ms-latency
+        - block-40ms-latency
+        - block-20ms-latency
+
+    - name: pod-kill
+      templateType: PodChaos
+      podChaos:
+        action: pod-kill
+        mode: one
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+      deadline: '1m'  # Pod will be killed and remain down for 2 minutes
+
+    - name: block-80ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+             app: ledgerwriter
+        delay:
+          latency: "3500ms"
+          correlation: "80"
+          jitter: "0ms"
+      deadline: '1m'  # Network latency of 80ms for 2 minutes
+
+    - name: block-60ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+             app: ledgerwriter
+        delay:
+          latency: "3500ms"
+          correlation: "60"
+          jitter: "0ms"
+      deadline: '1m'  # Network latency of 60ms for 2 minutes
+
+    - name: block-40ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+             app: ledgerwriter
+        delay:
+          latency: "3500ms"
+          correlation: "40"
+          jitter: "0ms"
+      deadline: '1m'  # Network latency of 40ms for 2 minutes
+
+    - name: block-20ms-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+             app: ledgerwriter
+        delay:
+          latency: "3500ms"
+          correlation: "20"
+          jitter: "0ms"
+      deadline: '1m'  # Network latency of 20ms for 2 minutes

@@ -1,0 +1,16 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: IOChaos
+metadata:
+  name: io-latency-example
+  namespace: boa
+spec:
+  action: latency
+  mode: one
+  selector:
+    labelSelectors:
+      app: ledger-db
+  volumePath: /var/lib/postgresql/data 
+  path: '/var/lib/postgresql/data/**/*'
+  delay: '4500ms'
+  percent: 100
+  duration: '400s'

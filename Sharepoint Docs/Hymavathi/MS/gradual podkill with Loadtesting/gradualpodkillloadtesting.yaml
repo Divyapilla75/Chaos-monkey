@@ -1,0 +1,174 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Workflow
+metadata:
+  name: gradual-network-latency
+  # namespace: bankofanthos  # Uncomment if required
+spec:
+  entry: network-latency-sequence
+  templates:
+    - name: network-latency-sequence
+      templateType: Serial  # Defines sequential execution
+      children:
+        - block-10pct-latency
+        - block-20pct-latency
+        - block-30pct-latency
+        - block-40pct-latency
+        - block-50pct-latency
+        - block-60pct-latency
+        - block-70pct-latency
+        - block-80pct-latency
+        - block-90pct-latency
+        - block-100pct-latency
+        - pod-restart-task  # Pod restart task
+    
+    - name: block-10pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1000ms"
+          correlation: "10"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: block-20pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1000ms"
+          correlation: "20"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: block-30pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1200ms"
+          correlation: "30"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: block-40pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1200ms"
+          correlation: "40"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: block-50pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1400ms"
+          correlation: "50"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: block-60pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1400ms"
+          correlation: "60"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: block-70pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1600ms"
+          correlation: "70"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: block-80pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1600ms"
+          correlation: "80"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: block-90pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1800ms"
+          correlation: "90"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: block-100pct-latency
+      templateType: NetworkChaos
+      networkChaos:
+        action: delay
+        mode: all
+        selector:
+          labelSelectors:
+            app: ledgerwriter
+        delay:
+          latency: "1800ms"
+          correlation: "100"
+          jitter: "0ms"
+      deadline: "1m"  # Latency for 1 minute
+
+    - name: pod-restart-task  # New pod-kill task
+      templateType: PodChaos
+      podChaos:
+        action: pod-kill
+        mode: all
+        selector:
+          namespaces:
+            - boa  # Updated namespace
+          labelSelectors:
+            app: ledgerwriter
+      deadline: "60s"  # Pod kill for 60 seconds
